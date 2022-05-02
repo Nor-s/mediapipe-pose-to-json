@@ -27,10 +27,6 @@
     ...
 ```
 
-## TODO
-
--   키값 전처리
-
 ## references
 
 -   https://google.github.io/mediapipe/
