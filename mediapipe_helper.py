@@ -2,7 +2,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
 import json
+import matplotlib.animation as animation
 from IPython.display import clear_output
+import ntpath
 # https://github.com/google/mediapipe/blob/master/mediapipe/python/solutions/drawing_utils.py
 mediapipe_names = [
 "nose"
@@ -39,6 +41,16 @@ mediapipe_names = [
 ,"left_foot_index"
 ,"right_foot_index"]
 
+def set_axes(ax, azim = 10, elev=10):
+  ax.set_xlim(-1.0, 1.0) 
+  ax.set_xlabel("-Z") 
+  ax.set_ylim(-1.0, 1.0)  
+  ax.set_ylabel("X") 
+  ax.set_zlim(-1.0, 1.0)  
+  ax.set_zlabel("-Y") 
+  ax.set_title('Mediapipe')
+  ax.view_init(elev=elev, azim=azim)
+
 def get_mediapipe_json_keypoints_with_color_and_mark(json_object, fidx):
   dot1 = []
   size = len(json_object['frames'][fidx]['keypoints3D'])
@@ -58,13 +70,7 @@ def draw_mediapipe(json_object, fidx, azim = 10):
   dot1 = get_mediapipe_json_keypoints_with_color_and_mark(json_object, fidx)
   plt.figure()
   ax1 = plt.axes(projection='3d')
-  ax1.view_init(elev=10, azim=azim)
-  ax1.set_xlim(-1.0, 1.0) 
-  ax1.set_xlabel("z") 
-  ax1.set_ylim(-1.0, 1.0)  
-  ax1.set_ylabel("x") 
-  ax1.set_zlim(-1.0, 1.0)  
-  ax1.set_zlabel("y") 
+  set_axes(ax1)
   for x in dot1:
     ax1.scatter3D(x[0],x[1],x[2], c=x[3],
                 marker= x[4], linewidths=1)  
@@ -74,3 +80,42 @@ def draw_all_frame_mediapipe_in_ipython(json_object, azim = 10):
   for fidx in range(0, len(json_object['frames'])):
     clear_output(wait=True)
     draw_mediapipe(json_object, fidx, azim)
+
+def json_one_frame_to_360_gif(json_object, frame_idx, save_path):
+    fig = plt.figure()
+    ax = plt.axes(projection='3d')
+    frame = get_mediapipe_json_keypoints_with_color_and_mark(json_object, frame_idx)
+    size = len(json_object['frames'][frame_idx]['keypoints3D'])
+    def update_round(i):
+        set_axes(ax, i)
+    ax.clear()
+    for i in range(0, size):
+        ax.scatter(frame[i][0], frame[i][1], frame[i][2], c = frame[i][3], marker= frame[i][4])
+    ani = animation.FuncAnimation(fig, update_round, frames=360, interval=json_object["ticksPerSecond"])
+    if save_path[-1] == '/':
+        save_path = save_path[0: -1]
+    ani.save(save_path + '/' + ntpath.basename(json_object['fileName']) +'_json_round.gif', writer='pillow')
+
+def json_to_gif(json_object, save_path, max_frame_num = 100):
+    fig = plt.figure()
+    ax = plt.axes(projection='3d')
+    frames = min(len(json_object["frames"]), max_frame_num)
+
+    size = len(json_object['frames'][0]['keypoints3D'])
+    def update(idx):
+        ax.clear()
+        dot1 = get_mediapipe_json_keypoints_with_color_and_mark(json_object, idx)
+        for i in range(0, size):
+            ax.scatter(dot1[i][0], dot1[i][1], dot1[i][2], c = dot1[i][3], marker= dot1[i][4])
+        set_axes(ax, idx)
+
+    ani = animation.FuncAnimation(fig, update, frames=frames, interval=json_object["ticksPerSecond"])
+    if save_path[-1] == '/':
+        save_path = save_path[0: -1]
+    ani.save(save_path + '/' + ntpath.basename(json_object['fileName']) +'_json_.gif', writer='pillow')
+
+def get_name_idx_map():
+    name_idx_map = {}
+    for idx in range(0, len(mediapipe_names)):
+        name_idx_map[mediapipe_names[idx]] = idx
+    return name_idx_map
