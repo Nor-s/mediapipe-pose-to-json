@@ -3,7 +3,7 @@ import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
 import json
 from IPython.display import clear_output
-
+# https://github.com/google/mediapipe/blob/master/mediapipe/python/solutions/drawing_utils.py
 mediapipe_names = [
 "nose"
 ,"left_eye_inner"
@@ -41,9 +41,10 @@ mediapipe_names = [
 
 def get_mediapipe_json_keypoints_with_color_and_mark(json_object, fidx):
   dot1 = []
-  for idx in range(0, 33):
-    landmark = json_object['frames'][fidx]["keypoints3D"][idx];
-    dot1.append([-landmark['z'], landmark['x'], -landmark['y']])
+  size = len(json_object['frames'][fidx]['keypoints3D'])
+  for idx in range(0,size):
+    landmark = json_object['frames'][fidx]['keypoints3D'][idx]
+    dot1.append([-float(landmark['z']), float(landmark['x']), -float(landmark['y'])])
     if idx < 10: 
       dot1[idx].append('r')
     elif idx == 24 or idx == 23 or idx == 11 or idx == 12:
@@ -51,12 +52,11 @@ def get_mediapipe_json_keypoints_with_color_and_mark(json_object, fidx):
     else:
       dot1[idx].append('g')
     dot1[idx].append('o')
-  dot1.append([0.0, 0.0, 0.0, 'b', 'H'])
   return dot1
 
 def draw_mediapipe(json_object, fidx, azim = 10):
   dot1 = get_mediapipe_json_keypoints_with_color_and_mark(json_object, fidx)
-
+  plt.figure()
   ax1 = plt.axes(projection='3d')
   ax1.view_init(elev=10, azim=azim)
   ax1.set_xlim(-1.0, 1.0) 
@@ -70,8 +70,7 @@ def draw_mediapipe(json_object, fidx, azim = 10):
                 marker= x[4], linewidths=1)  
   plt.show()
 
-
-def draw_all_frame_mediapipe(json_object):
+def draw_all_frame_mediapipe_in_ipython(json_object, azim = 10):
   for fidx in range(0, len(json_object['frames'])):
     clear_output(wait=True)
-    draw_mediapipe(json_object, fidx)
+    draw_mediapipe(json_object, fidx, azim)
