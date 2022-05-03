@@ -96,7 +96,7 @@ def json_one_frame_to_360_gif(json_object, frame_idx, save_path):
         save_path = save_path[0: -1]
     ani.save(save_path + '/' + ntpath.basename(json_object['fileName']) +'_json_round.gif', writer='pillow')
 
-def json_to_gif(json_object, save_path, max_frame_num = 100):
+def json_to_gif(json_object, save_path, max_frame_num = 100,  is_axes_move = False):
     fig = plt.figure()
     ax = plt.axes(projection='3d')
     frames = min(len(json_object["frames"]), max_frame_num)
@@ -107,12 +107,18 @@ def json_to_gif(json_object, save_path, max_frame_num = 100):
         dot1 = get_mediapipe_json_keypoints_with_color_and_mark(json_object, idx)
         for i in range(0, size):
             ax.scatter(dot1[i][0], dot1[i][1], dot1[i][2], c = dot1[i][3], marker= dot1[i][4])
-        set_axes(ax, idx)
+        if is_axes_move:
+            set_axes(ax, idx)
+        else:
+            set_axes(ax, 0)
 
     ani = animation.FuncAnimation(fig, update, frames=frames, interval=json_object["ticksPerSecond"])
     if save_path[-1] == '/':
         save_path = save_path[0: -1]
-    ani.save(save_path + '/' + ntpath.basename(json_object['fileName']) +'_json_.gif', writer='pillow')
+    if is_axes_move:
+      ani.save(save_path + '/' + ntpath.basename(json_object['fileName']) +'_json_mp_round_.gif', writer='pillow')
+    else:
+      ani.save(save_path + '/' + ntpath.basename(json_object['fileName']) +'_json_mp_.gif', writer='pillow')
 
 def get_name_idx_map():
     name_idx_map = {}
